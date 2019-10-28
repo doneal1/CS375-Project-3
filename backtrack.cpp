@@ -16,6 +16,8 @@ vector<pair<pair<int,int>, double>> cards;
 int greedy_one(int maxSize);
 int greedy_two(int maxSize);
 int backtracking(int maxSize);
+void track(int maxSize, int &maxProfit, int node, int tNode, bool addNode, vector<pair<pair<int,int>, int>> &tracking);
+int kwf(int maxSize);
 void minheapify(int i, int n);
 void buildminheap(int n);
 void heapsort(int n);
@@ -60,7 +62,9 @@ int main(int argc, char**argv){
 			input >> cards[j].first.second >> cards[j].first.first;
 			cards[j].second = (double)cards[j].first.first/cards[j].first.second;
 		}
+
 		auto start = chrono::high_resolution_clock::now();
+		heapsort((int)cards.size());
 		if(type == 0){
 			maxProfit = greedy_one(cap);
 		}
@@ -70,6 +74,7 @@ int main(int argc, char**argv){
 		else{
 			maxProfit = backtracking(cap);
 		}
+
 		auto stop = chrono::high_resolution_clock::now();
 
 		chrono::duration<double> elapsed = stop - start;
@@ -82,7 +87,6 @@ int main(int argc, char**argv){
 
 int greedy_one(int maxSize){
 	int ret = 0, size = maxSize;
-	heapsort((int)cards.size());
 
 	for(int i = 0; i < (int)cards.size(); i++){
 		int w = cards[i].first.second;
@@ -117,11 +121,77 @@ int greedy_two(int maxSize){
 	return ret;
 }
 
+
+
 int backtracking(int maxSize){
-	int ret = 0, maxProfit = 0;
-	maxProfit = greedy_two(maxSize);
+	int maxProfit = greedy_two(maxSize);
+	int tSize = cards.size()*cards.size();
+
+	//tracking.first -> profit and weight
+	//tracking.second -> bound
+	vector<pair<pair<int,int>, int>> tracking(tSize);
+	tracking[0].first.first = 0;
+	tracking[0].first.second = 0;
+	tracking[0].second = kwf(maxSize);
+
+	track(maxSize,maxProfit,0,0,true,tracking); //left side of the backtracking tree
+	track(maxSize,maxProfit,0,0,false,tracking); //right side of the backtracking tree
+	return maxProfit;
+}
+
+/*
+ * maxSize -> maximum weight
+ * maxProfit -> used to hold the found maximum profit, no change if greedy_two is max
+ * node -> index number of the card to add to the total profit
+ * tNode -> index number of the tracking array
+ * addNode -> whether the node is added or not (left child is true, right child is false)
+ * tracking -> array that holds the backtracking tree
+ */
+
+void track(int maxSize, int &maxProfit, int node, int tNode, bool addNode, vector<pair<pair<int,int>, int>> &tracking){
+	if(node < cards.size()){
+		int nextNode = 0;
+		if(addNode){
+			nextNode = tNode*2 + 1;
+			tracking[nextNode].first.first = tracking[tNode].first.first + cards[node].first.first;
+			tracking[nextNode].first.second = tracking[tNode].first.second + cards[node].first.second;
+			tracking[nextNode].second = tracking[tNode].second;
+			if(tracking[nextNode].first.second <= maxSize && tracking[nextNode].first.first > maxProfit)
+				maxProfit = tracking[nextNode].first.first; //new optimal solution
+		}
+		else{
+			nextNode = tNode*2 + 2;
+			tracking[nextNode].first.first = tracking[tNode].first.first;
+			tracking[nextNode].first.second = tracking[tNode].first.second;
+		}
+
+		//if the node is promising, create children
+		if(tracking[nextNode].first.second < maxSize && tracking[nextNode].second > maxProfit){
+			track(maxSize,maxProfit,node+1,nextNode,true,tracking); //left side of the backtracking tree
+			track(maxSize,maxProfit,node+1,nextNode,false,tracking); //right side of the backtracking tree
+		}
+	}
 
 
+}
+
+int kwf(int maxSize){
+	int ret = 0, size = maxSize;
+
+	for(int i = 0; i < (int)cards.size(); i++){
+		int w = cards[i].first.second;
+		if(size-w >= 0){
+		int p = cards[i].first.first;
+		ret += p;
+		size -=w;
+		}
+		else{
+			int p = (cards[i].first.first*size)/w;
+			ret += p;
+			size = 0;
+		}
+		if(size == 0) break;
+	}
 
 	return ret;
 }
