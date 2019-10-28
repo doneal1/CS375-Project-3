@@ -151,7 +151,7 @@ int backtracking(int maxSize){
  */
 
 void track(const int &maxSize, int &maxProfit, int node, int tNode, bool addNode,vector<int> &exempt, vector<pair<pair<int,int>, int>> &tracking){
-	if(node < cards.size()){
+	if(node < (int)cards.size()){
 		int nextNode = 0;
 		if(addNode){
 			nextNode = tNode*2 + 1;
@@ -188,7 +188,7 @@ int kwf(int maxSize, vector<int> &exempt){
 
 	for(int i = 0; i < (int)cards.size(); i++){
 		bool no = false;
-		for(int j = 0; j<exempt.size(); j++){
+		for(int j = 0; j < (int)exempt.size(); j++){
 			if(i == exempt[j])
 				no = true;
 		}
