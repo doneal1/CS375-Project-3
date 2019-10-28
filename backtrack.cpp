@@ -16,8 +16,8 @@ vector<pair<pair<int,int>, double>> cards;
 int greedy_one(int maxSize);
 int greedy_two(int maxSize);
 int backtracking(int maxSize);
-void track(int maxSize, int &maxProfit, int node, int tNode, bool addNode, vector<pair<pair<int,int>, int>> &tracking);
-int kwf(int maxSize);
+void track(const int &maxSize, int &maxProfit, int node, int tNode, bool addNode, vector<int> &exempt, vector<pair<pair<int,int>, int>> &tracking);
+int kwf(int maxSize, vector<int> &exempt);
 void minheapify(int i, int n);
 void buildminheap(int n);
 void heapsort(int n);
@@ -126,16 +126,17 @@ int greedy_two(int maxSize){
 int backtracking(int maxSize){
 	int maxProfit = greedy_two(maxSize);
 	int tSize = cards.size()*cards.size();
+	vector<int> ex;
 
 	//tracking.first -> profit and weight
 	//tracking.second -> bound
 	vector<pair<pair<int,int>, int>> tracking(tSize);
 	tracking[0].first.first = 0;
 	tracking[0].first.second = 0;
-	tracking[0].second = kwf(maxSize);
+	tracking[0].second = kwf(maxSize,ex);
 
-	track(maxSize,maxProfit,0,0,true,tracking); //left side of the backtracking tree
-	track(maxSize,maxProfit,0,0,false,tracking); //right side of the backtracking tree
+	track(maxSize,maxProfit,0,0,true, ex, tracking); //left side of the backtracking tree
+	track(maxSize,maxProfit,0,0,false, ex, tracking); //right side of the backtracking tree
 	return maxProfit;
 }
 
@@ -145,10 +146,11 @@ int backtracking(int maxSize){
  * node -> index number of the card to add to the total profit
  * tNode -> index number of the tracking array
  * addNode -> whether the node is added or not (left child is true, right child is false)
+ * exempt -> when a card is not added, kwf is updated so that it doesn't include that card, so this is a list of cards not included
  * tracking -> array that holds the backtracking tree
  */
 
-void track(int maxSize, int &maxProfit, int node, int tNode, bool addNode, vector<pair<pair<int,int>, int>> &tracking){
+void track(const int &maxSize, int &maxProfit, int node, int tNode, bool addNode,vector<int> &exempt, vector<pair<pair<int,int>, int>> &tracking){
 	if(node < cards.size()){
 		int nextNode = 0;
 		if(addNode){
@@ -161,36 +163,50 @@ void track(int maxSize, int &maxProfit, int node, int tNode, bool addNode, vecto
 		}
 		else{
 			nextNode = tNode*2 + 2;
+			exempt.push_back(node); //exclude card from updated kwf bound
 			tracking[nextNode].first.first = tracking[tNode].first.first;
 			tracking[nextNode].first.second = tracking[tNode].first.second;
+			tracking[nextNode].second = kwf(maxSize,exempt);
 		}
 
 		//if the node is promising, create children
 		if(tracking[nextNode].first.second < maxSize && tracking[nextNode].second > maxProfit){
-			track(maxSize,maxProfit,node+1,nextNode,true,tracking); //left side of the backtracking tree
-			track(maxSize,maxProfit,node+1,nextNode,false,tracking); //right side of the backtracking tree
+			track(maxSize,maxProfit,node+1,nextNode,true, exempt,tracking); //left side of the backtracking tree
+			track(maxSize,maxProfit,node+1,nextNode,false,exempt,tracking); //right side of the backtracking tree
 		}
+		if(!addNode){
+			exempt.pop_back(); //remove card from exempt list before going back to parent
+		}
+
 	}
 
 
 }
 
-int kwf(int maxSize){
+int kwf(int maxSize, vector<int> &exempt){
 	int ret = 0, size = maxSize;
 
 	for(int i = 0; i < (int)cards.size(); i++){
-		int w = cards[i].first.second;
-		if(size-w >= 0){
-		int p = cards[i].first.first;
-		ret += p;
-		size -=w;
+		bool no = false;
+		for(int j = 0; j<exempt.size(); j++){
+			if(i == exempt[j])
+				no = true;
 		}
-		else{
-			int p = (cards[i].first.first*size)/w;
+
+		if(!no){ //card is not exempt
+			int w = cards[i].first.second;
+			if(size-w >= 0){
+			int p = cards[i].first.first;
 			ret += p;
-			size = 0;
+			size -=w;
+			}
+			else{
+				int p = (cards[i].first.first*size)/w;
+				ret += p;
+				size = 0;
+			}
+			if(size == 0) break;
 		}
-		if(size == 0) break;
 	}
 
 	return ret;
