@@ -50,10 +50,7 @@ int main(int argc, char**argv){
 	ofstream output(out);
 
 	int item = 0, cap = 0, maxProfit = 0;
-	while(!input.eof()){
-		if(input.eof())
-			break;
-		input >> item >> cap;
+	while(input >> item >> cap){
 		for(int i = 0; i < item; i++){
 			pair<int,int> add(-1,-1);
 			pair<pair<int,int>, double> add2(add,0.0);
@@ -127,8 +124,8 @@ int greedy_two(int maxSize){
 int backtracking(int maxSize){
 	int maxProfit = greedy_two(maxSize);
 	int tSize = cards.size()*cards.size();
-	if((int)cards.size<30){
-		tSize = (int)pow(2,(double)cards.size());
+	if((int)cards.size()<30){
+		tSize = (int)pow(2,(double)cards.size()+1);
 	}
 	vector<int> ex;
 
@@ -183,8 +180,6 @@ void track(const int &maxSize, int &maxProfit, int node, int tNode, bool addNode
 			}
 		}
 	}
-
-
 }
 
 int kwf(int maxSize, vector<int> &exempt){
@@ -200,9 +195,9 @@ int kwf(int maxSize, vector<int> &exempt){
 		if(!no){ //card is not exempt
 			int w = cards[i].first.second;
 			if(size-w >= 0){
-			int p = cards[i].first.first;
-			ret += p;
-			size -=w;
+				int p = cards[i].first.first;
+				ret += p;
+				size -=w;
 			}
 			else{
 				int p = (cards[i].first.first*size)/w;
@@ -212,7 +207,6 @@ int kwf(int maxSize, vector<int> &exempt){
 			if(size == 0) break;
 		}
 	}
-
 	return ret;
 }
 
@@ -248,14 +242,16 @@ void buildminheap(int n){
 void heapsort(int n){
 	buildminheap(n);
 	for(int i = n; i > 0; i--){
-		int f = cards[0].first.first, s = cards[0].first.second;
-		double sec = cards[0].second;
-		cards[0].first.first = cards[i-1].first.first;
-		cards[0].first.second = cards[i-1].first.second;
-		cards[0].second = cards[i-1].second;
-		cards[i-1].first.first = f;
-		cards[i-1].first.second = s;
-		cards[i-1].second = sec;
-		minheapify(0,i-1);
+		if(cards[i-1].second > cards[0].second){ 
+			int f = cards[0].first.first, s = cards[0].first.second;
+			double sec = cards[0].second;
+			cards[0].first.first = cards[i-1].first.first;
+			cards[0].first.second = cards[i-1].first.second;
+			cards[0].second = cards[i-1].second;
+			cards[i-1].first.first = f;
+			cards[i-1].first.second = s;
+			cards[i-1].second = sec;
+			minheapify(0,i-1);
+		}
 	}
 }
