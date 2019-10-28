@@ -6,6 +6,7 @@
 #include <string.h>
 #include <vector>
 #include <chrono>
+#include <math.h>
 
 using namespace std;
 
@@ -126,6 +127,9 @@ int greedy_two(int maxSize){
 int backtracking(int maxSize){
 	int maxProfit = greedy_two(maxSize);
 	int tSize = cards.size()*cards.size();
+	if((int)cards.size<30){
+		tSize = (int)pow(2,(double)cards.size());
+	}
 	vector<int> ex;
 
 	//tracking.first -> profit and weight
@@ -152,32 +156,32 @@ int backtracking(int maxSize){
 
 void track(const int &maxSize, int &maxProfit, int node, int tNode, bool addNode,vector<int> &exempt, vector<pair<pair<int,int>, int>> &tracking){
 	if(node < (int)cards.size()){
-		int nextNode = 0;
-		if(addNode){
-			nextNode = tNode*2 + 1;
-			tracking[nextNode].first.first = tracking[tNode].first.first + cards[node].first.first;
-			tracking[nextNode].first.second = tracking[tNode].first.second + cards[node].first.second;
-			tracking[nextNode].second = tracking[tNode].second;
-			if(tracking[nextNode].first.second <= maxSize && tracking[nextNode].first.first > maxProfit)
-				maxProfit = tracking[nextNode].first.first; //new optimal solution
-		}
-		else{
-			nextNode = tNode*2 + 2;
-			exempt.push_back(node); //exclude card from updated kwf bound
-			tracking[nextNode].first.first = tracking[tNode].first.first;
-			tracking[nextNode].first.second = tracking[tNode].first.second;
-			tracking[nextNode].second = kwf(maxSize,exempt);
-		}
+		int nextNode = tNode*2 + 2;
+		if(nextNode < (int)tracking.size()){
+			if(addNode){
+				nextNode--;
+				tracking[nextNode].first.first = tracking[tNode].first.first + cards[node].first.first;
+				tracking[nextNode].first.second = tracking[tNode].first.second + cards[node].first.second;
+				tracking[nextNode].second = tracking[tNode].second;
+				if(tracking[nextNode].first.second <= maxSize && tracking[nextNode].first.first > maxProfit)
+					maxProfit = tracking[nextNode].first.first; //new optimal solution
+			}
+			else{
+				exempt.push_back(node); //exclude card from updated kwf bound
+				tracking[nextNode].first.first = tracking[tNode].first.first;
+				tracking[nextNode].first.second = tracking[tNode].first.second;
+				tracking[nextNode].second = kwf(maxSize,exempt);
+			}
 
-		//if the node is promising, create children
-		if(tracking[nextNode].first.second < maxSize && tracking[nextNode].second > maxProfit){
-			track(maxSize,maxProfit,node+1,nextNode,true, exempt,tracking); //left side of the backtracking tree
-			track(maxSize,maxProfit,node+1,nextNode,false,exempt,tracking); //right side of the backtracking tree
+			//if the node is promising, create children
+			if(tracking[nextNode].first.second < maxSize && tracking[nextNode].second > maxProfit){
+				track(maxSize,maxProfit,node+1,nextNode,true, exempt,tracking); //left side of the backtracking tree
+				track(maxSize,maxProfit,node+1,nextNode,false,exempt,tracking); //right side of the backtracking tree
+			}
+			if(!addNode){
+				exempt.pop_back(); //remove card from exempt list before going back to parent
+			}
 		}
-		if(!addNode){
-			exempt.pop_back(); //remove card from exempt list before going back to parent
-		}
-
 	}
 
 
